@@ -155,6 +155,7 @@
     <string name="button_remove_ads"><u>Remove ads and waits</u></string>
     <string name="toast_purchase_successful">Purchase performed successfully</string>
     <string name="toast_purchase_error">Purchase cancelled</string>
+    <string name="app_version_name">0.5</string>
 
     <plurals name="dialog_product_assignation_sub_header">
         <item quantity="one">Assign this product to:</item>

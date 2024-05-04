@@ -1,13 +1,13 @@
 package es.soutullo.blitter.view.activity
 
 import android.content.Intent
-import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.RecyclerView
 import es.soutullo.blitter.R
 import es.soutullo.blitter.databinding.ActivityFinalResultBinding
 import es.soutullo.blitter.model.dao.DaoFactory
@@ -32,7 +32,8 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
         this.supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         this.binding = DataBindingUtil.setContentView(this, R.layout.activity_final_result)
-        this.bill = this.intent.getSerializableExtra(BillSummaryActivity.BILL_INTENT_DATA_KEY) as Bill
+        this.bill =
+            this.intent.getSerializableExtra(BillSummaryActivity.BILL_INTENT_DATA_KEY) as Bill
 
         this.init()
     }
@@ -42,8 +43,8 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> this.onSupportNavigateUp()
             R.id.action_rename -> this.onRenameClicked()
             R.id.action_share -> this.onShareClicked()
@@ -94,8 +95,10 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
         val positiveButtonText = this.getString(R.string.action_activity_final_result_name)
         val editTextHint = this.getString(R.string.dialog_rename_bill_edit_text_hint)
 
-        PromptDialog(this, this.createRenameDialogHandler(), dialogTitle, negativeButtonText,
-                positiveButtonText, editTextHint, this.bill.name).show()
+        PromptDialog(
+            this, this.createRenameDialogHandler(), dialogTitle, negativeButtonText,
+            positiveButtonText, editTextHint, this.bill.name
+        ).show()
     }
 
     /** Gets called when the clone menu entry is clicked */
@@ -116,7 +119,12 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
         shareIntent.setDataAndType(contentUri, this.contentResolver.getType(contentUri))
         shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
 
-        this.startActivity(Intent.createChooser(shareIntent, this.getString(es.soutullo.blitter.R.string.intent_share_title)))
+        this.startActivity(
+            Intent.createChooser(
+                shareIntent,
+                this.getString(es.soutullo.blitter.R.string.intent_share_title)
+            )
+        )
     }
 
     /** Gets called when the delete button on the app bar is clicked */
@@ -126,8 +134,10 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
         val positiveButtonText = this.getString(R.string.dialog_generic_delete_button)
         val negativeButtonText = this.getString(R.string.generic_dialog_cancel)
 
-        ConfirmationDialog(this, this.createDeleteDialogHandler(), title, message,
-                positiveButtonText, negativeButtonText).show()
+        ConfirmationDialog(
+            this, this.createDeleteDialogHandler(), title, message,
+            positiveButtonText, negativeButtonText
+        ).show()
     }
 
     /**
@@ -160,18 +170,19 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
         this.findViewById<RecyclerView>(R.id.final_result_list).adapter = this.peopleAdapter
 
         this.peopleAdapter.add(null)
-        this.peopleAdapter.addAll(this.bill.lines.map { it.persons }.flatten().distinct() )
+        this.peopleAdapter.addAll(this.bill.lines.map { it.persons }.flatten().distinct())
     }
 
     /** Creates the dialog handler for the bill renaming dialog */
     private fun createRenameDialogHandler(): IDialogHandler {
         return object : IDialogHandler {
             override fun onPositiveButtonClicked(dialog: CustomDialog) {
-                (dialog as? PromptDialog)?.getUserInput()?.let { this@FinalResultActivity.onRenamed(it) }
+                (dialog as? PromptDialog)?.getUserInput()
+                    ?.let { this@FinalResultActivity.onRenamed(it) }
             }
 
-            override fun onNegativeButtonClicked(dialog: CustomDialog) { }
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNegativeButtonClicked(dialog: CustomDialog) {}
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 
@@ -182,8 +193,8 @@ class FinalResultActivity : AppCompatActivity(), IListHandler {
                 this@FinalResultActivity.onDeleteConfirmed()
             }
 
-            override fun onNegativeButtonClicked(dialog: CustomDialog) { }
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNegativeButtonClicked(dialog: CustomDialog) {}
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 }

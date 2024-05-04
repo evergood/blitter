@@ -1,16 +1,16 @@
 package es.soutullo.blitter.view.adapter.generic
 
-import android.databinding.DataBindingUtil
-import android.databinding.ViewDataBinding
-import android.support.design.widget.FloatingActionButton
-import android.support.v7.widget.DividerItemDecoration
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bignerdranch.android.multiselector.MultiSelector
 import com.bignerdranch.android.multiselector.MultiSelectorBindingHolder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import es.soutullo.blitter.BR
 import es.soutullo.blitter.view.adapter.handler.IListHandler
 import es.soutullo.blitter.view.util.BlitterUtils
@@ -21,8 +21,11 @@ import es.soutullo.blitter.view.util.BlitterUtils
  * @param handler The handler. Gets called when the user performs interactions with a recycler view item,
  *                such as a click
  */
-abstract class GenericListAdapter<Item>(val items: MutableList<Item> = mutableListOf(), var handler: IListHandler? = null, var fab: FloatingActionButton? = null)
-        : RecyclerView.Adapter<GenericListAdapter<Item>.GenericListViewHolder>() {
+abstract class GenericListAdapter<Item>(
+    val items: MutableList<Item> = mutableListOf(),
+    var handler: IListHandler? = null,
+    var fab: FloatingActionButton? = null
+) : RecyclerView.Adapter<GenericListAdapter<Item>.GenericListViewHolder>() {
     companion object {
         private val VIEW_TYPE_STANDARD = 0
         private val VIEW_TYPE_NULL = 1
@@ -32,10 +35,14 @@ abstract class GenericListAdapter<Item>(val items: MutableList<Item> = mutableLi
     private var isLoading = false
 
     override fun getItemCount(): Int = this.items.size
-    override fun getItemViewType(position: Int): Int = if(this.items[position] != null) VIEW_TYPE_STANDARD else VIEW_TYPE_NULL
+    override fun getItemViewType(position: Int): Int =
+        if (this.items[position] != null) VIEW_TYPE_STANDARD else VIEW_TYPE_NULL
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GenericListViewHolder =
-            GenericListViewHolder(LayoutInflater.from(parent.context).inflate(this.getActualItemLayout(viewType), parent, false))
+        GenericListViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(this.getActualItemLayout(viewType), parent, false)
+        )
 
     override fun onBindViewHolder(holder: GenericListViewHolder, position: Int) {
         holder.binding!!.setVariable(BR.item, this.items[position])
@@ -43,17 +50,22 @@ abstract class GenericListAdapter<Item>(val items: MutableList<Item> = mutableLi
         holder.binding.executePendingBindings()
     }
 
-    override fun onAttachedToRecyclerView(recyclerView: RecyclerView?) {
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
         this.recyclerView = recyclerView
-        val layoutManager = LinearLayoutManager(recyclerView?.context)
+        val layoutManager = LinearLayoutManager(recyclerView.context)
 
-        recyclerView?.layoutManager = layoutManager
+        recyclerView.layoutManager = layoutManager
         if (this.showSeparators()) {
-            recyclerView?.addItemDecoration(DividerItemDecoration(recyclerView.context, layoutManager.orientation))
+            recyclerView.addItemDecoration(
+                DividerItemDecoration(
+                    recyclerView.context,
+                    layoutManager.orientation
+                )
+            )
         }
 
-        recyclerView?.addOnScrollListener(object : RecyclerView.OnScrollListener(){
-            override fun onScrolled(recyclerView: RecyclerView?, diffX: Int, diffY: Int) {
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, diffX: Int, diffY: Int) {
                 this@GenericListAdapter.onScroll(diffX, diffY)
             }
         })
@@ -126,13 +138,16 @@ abstract class GenericListAdapter<Item>(val items: MutableList<Item> = mutableLi
     }
 
     /** @return The correct item layout depending on the given view type */
-    protected fun getActualItemLayout(viewType: Int): Int = if(viewType == VIEW_TYPE_STANDARD) this.getItemLayout() else this.getNullItemLayout()
+    protected fun getActualItemLayout(viewType: Int): Int =
+        if (viewType == VIEW_TYPE_STANDARD) this.getItemLayout() else this.getNullItemLayout()
 
     private fun onScroll(diffX: Int, diffY: Int) {
-        if(diffY > 0) {
+        if (diffY > 0) {
             this.fab?.hide()
-            if((this.recyclerView?.layoutManager as? LinearLayoutManager)?.findLastVisibleItemPosition() ?: -10 >= this.itemCount - 1) {
-                if(!this.isLoading) {
+            if (((this.recyclerView?.layoutManager as? LinearLayoutManager)?.findLastVisibleItemPosition()
+                    ?: -10) >= this.itemCount - 1
+            ) {
+                if (!this.isLoading) {
                     this.isLoading = true
                     this.onLoadMore()
                     this.isLoading = false
@@ -143,7 +158,7 @@ abstract class GenericListAdapter<Item>(val items: MutableList<Item> = mutableLi
         }
     }
 
-    open fun onLoadMore() { }
+    open fun onLoadMore() {}
 
     /** @return True if separators must be drawn between each element of the list */
     open protected fun showSeparators(): Boolean = true
@@ -158,14 +173,18 @@ abstract class GenericListAdapter<Item>(val items: MutableList<Item> = mutableLi
     open protected fun getNullItemLayout(): Int = 0
 
     /** Generic ViewHolder for each item of the RecyclerView */
-    open inner class GenericListViewHolder(protected val view: View, multiSelector: MultiSelector = MultiSelector()): MultiSelectorBindingHolder(view, multiSelector) {
+    open inner class GenericListViewHolder(
+        protected val view: View,
+        multiSelector: MultiSelector = MultiSelector()
+    ) : MultiSelectorBindingHolder(view, multiSelector) {
         val binding: ViewDataBinding? = DataBindingUtil.bind(this.view)
 
         init {
             val clickListener = View.OnClickListener { this.onClick(it.id) }
 
             this.view.setOnClickListener(clickListener)
-            this@GenericListAdapter.clickableChildren().forEach { this.view.findViewById<View>(it).setOnClickListener(clickListener) }
+            this@GenericListAdapter.clickableChildren()
+                .forEach { this.view.findViewById<View>(it).setOnClickListener(clickListener) }
         }
 
         /**

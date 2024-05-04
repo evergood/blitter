@@ -1,22 +1,26 @@
 package es.soutullo.blitter.view.adapter.generic
 
-import android.support.v4.content.ContextCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import androidx.core.content.ContextCompat
 import com.bignerdranch.android.multiselector.MultiSelector
 import es.soutullo.blitter.R
 import es.soutullo.blitter.view.adapter.handler.IChoosableItemsListHandler
 
-abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsListHandler? = null) : GenericListAdapter<Item>(handler = choosableHandler) {
+abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsListHandler? = null) :
+    GenericListAdapter<Item>(handler = choosableHandler) {
     private val multiSelector = MultiSelector()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GenericListViewHolder =
-            ChoosableItemViewHolder(LayoutInflater.from(parent.context).inflate(this.getActualItemLayout(viewType), parent, false))
+        ChoosableItemViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(this.getActualItemLayout(viewType), parent, false)
+        )
 
     /** @return True if the choosing mode is currently enabled */
-    fun isChoosingModeEnabled() : Boolean = this.multiSelector.isSelectable
+    fun isChoosingModeEnabled(): Boolean = this.multiSelector.isSelectable
 
     /** @return The current selected indexes as as list of integers */
     fun getSelectedIndexes(): List<Int> = this.multiSelector.selectedPositions
@@ -42,7 +46,8 @@ abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsList
     }
 
     /** View holder for the choosable items */
-    inner class ChoosableItemViewHolder(itemView: View) : GenericListAdapter<Item>.GenericListViewHolder(itemView, this.multiSelector) {
+    inner class ChoosableItemViewHolder(itemView: View) :
+        GenericListAdapter<Item>.GenericListViewHolder(itemView, this.multiSelector) {
         private var isSelectable = false
         private var isActivated = false
 
@@ -51,7 +56,7 @@ abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsList
         }
 
         override fun onClick(viewId: Int) {
-            if(this@ChoosableItemsAdapter.multiSelector.isSelectable && this@ChoosableItemsAdapter.items[this.adapterPosition] != null) {
+            if (this@ChoosableItemsAdapter.multiSelector.isSelectable && this@ChoosableItemsAdapter.items[this.adapterPosition] != null) {
                 this@ChoosableItemsAdapter.multiSelector.setSelected(this, !this.isActivated)
             } else {
                 super.onClick(viewId)
@@ -60,7 +65,7 @@ abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsList
 
         /** Gets called when a long click is performed on the item */
         private fun onLongClick(): Boolean {
-            if(!this@ChoosableItemsAdapter.multiSelector.isSelectable && this@ChoosableItemsAdapter.items[this.adapterPosition] != null) {
+            if (!this@ChoosableItemsAdapter.multiSelector.isSelectable && this@ChoosableItemsAdapter.items[this.adapterPosition] != null) {
                 (this@ChoosableItemsAdapter.handler as? IChoosableItemsListHandler)?.onChoiceModeStarted()
 
                 this@ChoosableItemsAdapter.multiSelector.isSelectable = true
@@ -78,12 +83,20 @@ abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsList
          */
         override fun setActivated(activated: Boolean) {
             this.isActivated = activated
-            val background = if(activated) R.color.md_grey_100 else R.color.md_white_1000
+            val background = if (activated) R.color.md_grey_100 else R.color.md_white_1000
 
             (this@ChoosableItemsAdapter.handler as? IChoosableItemsListHandler)?.onChosenItemsChanged()
 
             this.view.findViewById<CheckBox>(R.id.choosing_checkbox)?.isChecked = activated
-            this.view.setBackgroundColor(ContextCompat.getColor(this@ChoosableItemsAdapter.recyclerView?.context, background))
+            val context = this@ChoosableItemsAdapter.recyclerView?.context
+            context?.let {
+                this.view.setBackgroundColor(
+                    ContextCompat.getColor(
+                        context,
+                        background
+                    )
+                )
+            }
         }
 
         /**
@@ -95,8 +108,13 @@ abstract class ChoosableItemsAdapter<Item>(choosableHandler: IChoosableItemsList
             this.isSelectable = selectable
 
             this.view.findViewById<CheckBox>(R.id.choosing_checkbox)?.let { checkbox ->
-                checkbox.visibility = if(selectable) View.VISIBLE else View.GONE
-                checkbox.setOnCheckedChangeListener({ _, newState -> this@ChoosableItemsAdapter.multiSelector.setSelected(this@ChoosableItemViewHolder, newState) })
+                checkbox.visibility = if (selectable) View.VISIBLE else View.GONE
+                checkbox.setOnCheckedChangeListener { _, newState ->
+                    this@ChoosableItemsAdapter.multiSelector.setSelected(
+                        this@ChoosableItemViewHolder,
+                        newState
+                    )
+                }
             }
         }
 

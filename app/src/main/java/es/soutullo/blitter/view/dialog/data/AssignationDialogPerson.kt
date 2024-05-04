@@ -1,9 +1,7 @@
 package es.soutullo.blitter.view.dialog.data
 
-import android.content.Context
-import android.databinding.BaseObservable
-import android.databinding.ObservableField
-import es.soutullo.blitter.model.dao.DaoFactory
+import androidx.databinding.BaseObservable
+import androidx.databinding.ObservableField
 import es.soutullo.blitter.view.activity.AssignationActivity
 
 /**
@@ -12,18 +10,22 @@ import es.soutullo.blitter.view.activity.AssignationActivity
  * @param name The person name
  * @param status The initial status of the checkbox. If null, the status is set to indeterminate
  */
-class AssignationDialogPerson(private val assignationActivity: AssignationActivity, var name: ObservableField<String>, var status: ObservableField<Boolean?> = ObservableField()): BaseObservable() {
+class AssignationDialogPerson(
+    private val assignationActivity: AssignationActivity,
+    var name: ObservableField<String>,
+    var status: ObservableField<Boolean?> = ObservableField()
+) : BaseObservable() {
     var canBeIndeterminate: Boolean = this.status.get() == null
 
     /** Changes the checkbox to the next status */
     fun changeStatus() {
         this.status.get().let { currentStatus ->
-            if(currentStatus == null || (!currentStatus && !this.canBeIndeterminate)) {
+            if (currentStatus == null || (!currentStatus && !this.canBeIndeterminate)) {
                 this.status.set(true)
             } else if (currentStatus) {
                 this.status.set(false)
-            } else if(!currentStatus) {
-                this.status.set(if(this.canBeIndeterminate) null else true)
+            } else if (!currentStatus) {
+                this.status.set(if (this.canBeIndeterminate) null else true)
             }
         }
     }

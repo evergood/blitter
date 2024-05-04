@@ -10,14 +10,15 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.os.Build;
 import android.os.SystemClock;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresPermission;
-import android.support.annotation.StringDef;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresPermission;
+import androidx.annotation.StringDef;
 
 import com.google.android.gms.common.images.Size;
 import com.google.android.gms.vision.Detector;
@@ -55,7 +56,7 @@ import java.util.Map;
  * <li>android.permissions.CAMERA</li>
  * </ul>
  */
-@SuppressWarnings("deprecation")
+
 public class CameraSource {
     @SuppressLint("InlinedApi")
     public static final int CAMERA_FACING_BACK = CameraInfo.CAMERA_FACING_BACK;
@@ -86,7 +87,8 @@ public class CameraSource {
             Camera.Parameters.FOCUS_MODE_MACRO
     })
     @Retention(RetentionPolicy.SOURCE)
-    private @interface FocusMode {}
+    private @interface FocusMode {
+    }
 
     @StringDef({
             Camera.Parameters.FLASH_MODE_ON,
@@ -96,7 +98,8 @@ public class CameraSource {
             Camera.Parameters.FLASH_MODE_TORCH
     })
     @Retention(RetentionPolicy.SOURCE)
-    private @interface FlashMode {}
+    private @interface FlashMode {
+    }
 
     private Context mContext;
 
@@ -129,7 +132,6 @@ public class CameraSource {
     // these aren't used outside of the method that creates them, they still must have hard
     // references maintained to them.
     private SurfaceView mDummySurfaceView;
-    private SurfaceTexture mDummySurfaceTexture;
 
     /**
      * Dedicated thread and associated runnable for calling into the detector with frames, as the
@@ -143,7 +145,7 @@ public class CameraSource {
      * buffer.  We use byte buffers internally because this is a more efficient way to call into
      * native code later (avoids a potential copy).
      */
-    private Map<byte[], ByteBuffer> mBytesToByteBuffer = new HashMap<>();
+    private final Map<byte[], ByteBuffer> mBytesToByteBuffer = new HashMap<>();
 
     //==============================================================================================
     // Builder
@@ -328,13 +330,8 @@ public class CameraSource {
 
             // SurfaceTexture was introduced in Honeycomb (11), so if we are running and
             // old version of Android. fall back to use SurfaceView.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                mDummySurfaceTexture = new SurfaceTexture(DUMMY_TEXTURE_NAME);
-                mCamera.setPreviewTexture(mDummySurfaceTexture);
-            } else {
-                mDummySurfaceView = new SurfaceView(mContext);
-                mCamera.setPreviewDisplay(mDummySurfaceView.getHolder());
-            }
+            SurfaceTexture mDummySurfaceTexture = new SurfaceTexture(DUMMY_TEXTURE_NAME);
+            mCamera.setPreviewTexture(mDummySurfaceTexture);
             mCamera.startPreview();
 
             mProcessingThread = new Thread(mFrameProcessor);
@@ -406,12 +403,8 @@ public class CameraSource {
                     // SurfaceHolder.  If the developer doesn't want to display a preview we use a
                     // SurfaceTexture if we are running at least Honeycomb.
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                        mCamera.setPreviewTexture(null);
+                    mCamera.setPreviewTexture(null);
 
-                    } else {
-                        mCamera.setPreviewDisplay(null);
-                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to clear camera preview: " + e);
                 }
@@ -453,7 +446,7 @@ public class CameraSource {
             currentZoom = parameters.getZoom() + 1;
             float newZoom;
             if (scale > 1) {
-                newZoom = currentZoom + scale * (maxZoom / 10);
+                newZoom = currentZoom + scale * ((float) maxZoom / 10);
             } else {
                 newZoom = currentZoom * scale;
             }
@@ -628,11 +621,7 @@ public class CameraSource {
      * @return {@code true} if the operation is supported (i.e. from Jelly Bean), {@code false}
      * otherwise
      */
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public boolean setAutoFocusMoveCallback(@Nullable AutoFocusMoveCallback cb) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            return false;
-        }
 
         synchronized (mCameraLock) {
             if (mCamera != null) {
@@ -661,7 +650,7 @@ public class CameraSource {
     /**
      * Wraps the camera1 shutter callback so that the deprecated API isn't exposed.
      */
-    private class PictureStartCallback implements Camera.ShutterCallback {
+    private static class PictureStartCallback implements Camera.ShutterCallback {
         private ShutterCallback mDelegate;
 
         @Override
@@ -695,7 +684,7 @@ public class CameraSource {
     /**
      * Wraps the camera1 auto focus callback so that the deprecated API isn't exposed.
      */
-    private class CameraAutoFocusCallback implements Camera.AutoFocusCallback {
+    private static class CameraAutoFocusCallback implements Camera.AutoFocusCallback {
         private AutoFocusCallback mDelegate;
 
         @Override
@@ -709,8 +698,7 @@ public class CameraSource {
     /**
      * Wraps the camera1 auto focus move callback so that the deprecated API isn't exposed.
      */
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private class CameraAutoFocusMoveCallback implements Camera.AutoFocusMoveCallback {
+    private static class CameraAutoFocusMoveCallback implements Camera.AutoFocusMoveCallback {
         private AutoFocusMoveCallback mDelegate;
 
         @Override
@@ -1085,7 +1073,7 @@ public class CameraSource {
          */
         @SuppressLint("Assert")
         void release() {
-            assert (mProcessingThread.getState() == State.TERMINATED);
+            assert mProcessingThread == null || (mProcessingThread.getState() == State.TERMINATED);
             mDetector.release();
             mDetector = null;
         }

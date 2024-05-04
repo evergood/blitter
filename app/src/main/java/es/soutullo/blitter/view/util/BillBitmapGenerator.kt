@@ -1,10 +1,14 @@
 package es.soutullo.blitter.view.util
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.net.Uri
-import android.support.v4.content.ContextCompat
-import android.support.v4.content.FileProvider
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import es.soutullo.blitter.R
 import es.soutullo.blitter.model.vo.bill.Bill
 import es.soutullo.blitter.model.vo.bill.BillLine
@@ -17,8 +21,12 @@ import java.io.FileOutputStream
  * @param bill The bill object to be converted to bitmap
  * @param includeDetails Indicates whether or not the detailed breakdown for each person should be included
  */
-class BillBitmapGenerator(private val context: Context, private val bill: Bill, private val includeDetails: Boolean) {
-    companion object{
+class BillBitmapGenerator(
+    private val context: Context,
+    private val bill: Bill,
+    private val includeDetails: Boolean
+) {
+    companion object {
         const val RECEIPT_WIDTH = 428
         const val RECEIPT_PADDING = 16f
         const val SEPARATORS_WIDTH = 36
@@ -42,7 +50,8 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
      */
     fun generateBillBitmap(): Uri {
         val cachePath = File(this.context.cacheDir, "images")
-        val bitmap = Bitmap.createBitmap(RECEIPT_WIDTH, this.receiptHeight(), Bitmap.Config.ARGB_8888)
+        val bitmap =
+            Bitmap.createBitmap(RECEIPT_WIDTH, this.receiptHeight(), Bitmap.Config.ARGB_8888)
         val stream = this.prepareOutputStream(cachePath)
 
         this.canvas = Canvas(bitmap)
@@ -92,23 +101,40 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
         val backgroundPaint = Paint()
 
         backgroundPaint.color = Color.WHITE
-        this.canvas.drawRect(0f, 0f, RECEIPT_WIDTH.toFloat(), this.receiptHeight().toFloat(), backgroundPaint)
+        this.canvas.drawRect(
+            0f,
+            0f,
+            RECEIPT_WIDTH.toFloat(),
+            this.receiptHeight().toFloat(),
+            backgroundPaint
+        )
     }
 
     /** Draws the receipt title */
     private fun drawBlitterTitle() {
-        this.drawText(this.context.getString(R.string.bill_summary_header), true, Paint.Align.CENTER, 24f, 8f)
+        this.drawText(
+            this.context.getString(R.string.bill_summary_header),
+            true,
+            Paint.Align.CENTER,
+            24f,
+            8f
+        )
     }
 
     /** Draws a thin ASCII char separator over the receipt */
     private fun drawThinSeparator(marginTop: Float) {
-        val separator = this.context.getString(R.string.bill_summary_separator_product_count).repeat(SEPARATORS_WIDTH)
+        val separator = this.context.getString(R.string.bill_summary_separator_product_count)
+            .repeat(SEPARATORS_WIDTH)
         this.drawText(separator, true, Paint.Align.CENTER, marginTop = marginTop)
     }
 
     /** Draws the product count line */
     private fun drawProductsCount() {
-        this.drawText(this.context.getString(R.string.bill_summary_total_products_text), true, this.alignStart())
+        this.drawText(
+            this.context.getString(R.string.bill_summary_total_products_text),
+            true,
+            this.alignStart()
+        )
         this.drawText(this.bill.lines.size.toString(), false, this.alignEnd())
     }
 
@@ -118,7 +144,8 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
      * @param marginTop The top margin of this header
      */
     private fun drawHeader(headerText: String, marginTop: Float) {
-        val separator = this.context.getString(R.string.bill_summary_separator_products_title).repeat(SEPARATORS_WIDTH)
+        val separator = this.context.getString(R.string.bill_summary_separator_products_title)
+            .repeat(SEPARATORS_WIDTH)
 
         this.drawText(headerText, true, Paint.Align.CENTER, 20f, marginTop)
         this.drawText(separator, true, Paint.Align.CENTER)
@@ -127,33 +154,66 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
     /** Draws the products section (products list) */
     private fun drawProducts() {
         this.bill.lines.forEach {
-            this.drawText(this.ellipsizeIfNecessary(it.name.toUpperCase(), MAX_LINE_CHARACTERS), true, this.alignStart())
+            this.drawText(
+                this.ellipsizeIfNecessary(it.name.toUpperCase(), MAX_LINE_CHARACTERS),
+                true,
+                this.alignStart()
+            )
             this.drawText(BlitterUtils.getPriceAsString(it.price), false, this.alignEnd())
         }
     }
 
     /** Draws a thick ASCII char separator over the receipt */
     private fun drawThickSeparator(marginTop: Float) {
-        val separator = this.context.getString(R.string.bill_summary_separator_total_price).repeat(SEPARATORS_WIDTH)
+        val separator = this.context.getString(R.string.bill_summary_separator_total_price)
+            .repeat(SEPARATORS_WIDTH)
         this.drawText(separator, true, Paint.Align.CENTER, marginTop = marginTop)
     }
 
     /** Draws the total price block over the receipt */
     private fun drawTotal() {
-        if(this.bill.tax > 0) {
-            this.drawText(this.context.getString(R.string.bill_summary_subtotal_text), true, this.alignStart())
+        if (this.bill.tax > 0) {
+            this.drawText(
+                this.context.getString(R.string.bill_summary_subtotal_text),
+                true,
+                this.alignStart()
+            )
             this.drawText(BlitterUtils.getPriceAsString(this.bill.subtotal), false, this.alignEnd())
 
-            this.drawText(this.context.getString(R.string.bill_summary_tax_text), true, this.alignStart())
+            this.drawText(
+                this.context.getString(R.string.bill_summary_tax_text),
+                true,
+                this.alignStart()
+            )
             this.drawText(BlitterUtils.getPriceAsString(this.bill.tax), false, this.alignEnd())
         }
 
-        this.drawText(this.context.getString(R.string.bill_summary_total_price_text), true, this.alignStart(), 18f)
-        this.drawText(BlitterUtils.getPriceAsString(this.bill.subtotal + this.bill.tax), false, this.alignEnd(), 18f)
+        this.drawText(
+            this.context.getString(R.string.bill_summary_total_price_text),
+            true,
+            this.alignStart(),
+            18f
+        )
+        this.drawText(
+            BlitterUtils.getPriceAsString(this.bill.subtotal + this.bill.tax),
+            false,
+            this.alignEnd(),
+            18f
+        )
 
-        if(this.bill.tipPercent > 0) {
-            this.drawText(this.context.getString(R.string.bill_summary_tip_value), true, this.alignStart(), 18f)
-            this.drawText(BlitterUtils.getPriceAsString((this.bill.subtotal + this.bill.tax) * this.bill.tipPercent), false, this.alignEnd(), 18f)
+        if (this.bill.tipPercent > 0) {
+            this.drawText(
+                this.context.getString(R.string.bill_summary_tip_value),
+                true,
+                this.alignStart(),
+                18f
+            )
+            this.drawText(
+                BlitterUtils.getPriceAsString((this.bill.subtotal + this.bill.tax) * this.bill.tipPercent),
+                false,
+                this.alignEnd(),
+                18f
+            )
         }
     }
 
@@ -161,20 +221,46 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
     private fun drawBreakdown() {
         this.persons().forEachIndexed { index, it ->
             val personName = this.ellipsizeIfNecessary(it.name.toUpperCase(), MAX_LINE_CHARACTERS)
-            this.drawText(personName, true, this.alignStart(), marginTop = if(this.includeDetails && index > 0) 14f else 0f)
-            this.drawText(BlitterUtils.getPriceAsString(it.getPayingAmountWithTip()), false, this.alignEnd())
+            this.drawText(
+                personName,
+                true,
+                this.alignStart(),
+                marginTop = if (this.includeDetails && index > 0) 14f else 0f
+            )
+            this.drawText(
+                BlitterUtils.getPriceAsString(it.getPayingAmountWithTip()),
+                false,
+                this.alignEnd()
+            )
 
-            if(this.includeDetails) {
+            if (this.includeDetails) {
                 it.lines.forEach { line ->
-                    this.drawText(this.ellipsizeIfNecessary(line.name, MAX_LINE_CHARACTERS), true, this.alignStart(), 14f, marginSide = 16f)
+                    this.drawText(
+                        this.ellipsizeIfNecessary(line.name, MAX_LINE_CHARACTERS),
+                        true,
+                        this.alignStart(),
+                        14f,
+                        marginSide = 16f
+                    )
                     this.drawText(this.brokenDownPrice(line), false, this.alignEnd(), 14f)
                 }
 
-                if(it.getTipPercent() > 0) {
+                if (it.getTipPercent() > 0) {
                     val tipValue = it.getTipPercent() * it.getPayingAmountWithoutTip()
 
-                    this.drawText(this.context.getString(R.string.bill_share_tip_line_name), true, this.alignStart(), 14f, marginSide = 16f)
-                    this.drawText(BlitterUtils.getPriceAsString(tipValue), false, this.alignEnd(), 14f)
+                    this.drawText(
+                        this.context.getString(R.string.bill_share_tip_line_name),
+                        true,
+                        this.alignStart(),
+                        14f,
+                        marginSide = 16f
+                    )
+                    this.drawText(
+                        BlitterUtils.getPriceAsString(tipValue),
+                        false,
+                        this.alignEnd(),
+                        14f
+                    )
                 }
             }
         }
@@ -188,13 +274,20 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
      * @param size The size of the text to be drawn
      * @param marginTop The margin top of the text block to be drawn
      */
-    private fun drawText(text: String, drawOnNewLine: Boolean, align: Paint.Align, size: Float = 16f, marginTop: Float = 0f, marginSide: Float = 0f) {
-        this.lastTextLinePosition += if(drawOnNewLine) size + marginTop else marginTop
+    private fun drawText(
+        text: String,
+        drawOnNewLine: Boolean,
+        align: Paint.Align,
+        size: Float = 16f,
+        marginTop: Float = 0f,
+        marginSide: Float = 0f
+    ) {
+        this.lastTextLinePosition += if (drawOnNewLine) size + marginTop else marginTop
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        val horizontalPosition = when(align) {
+        val horizontalPosition = when (align) {
             Paint.Align.LEFT -> RECEIPT_PADDING + marginSide
-            Paint.Align.CENTER ->  RECEIPT_WIDTH / 2f
+            Paint.Align.CENTER -> RECEIPT_WIDTH / 2f
             Paint.Align.RIGHT -> RECEIPT_WIDTH - RECEIPT_PADDING - marginSide
         }
 
@@ -208,15 +301,18 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
 
     /** Calculates the receipt image height for the current bill */
     private fun receiptHeight(): Int {
-        var totalPriceHeight = if(this.bill.tax > 0) TAXED_TOTAL_PRICE_HEIGHT else STANDARD_TOTAL_PRICE_HEIGHT
+        var totalPriceHeight =
+            if (this.bill.tax > 0) TAXED_TOTAL_PRICE_HEIGHT else STANDARD_TOTAL_PRICE_HEIGHT
         val productsHeight = this.bill.lines.size * LINE_HEIGHT
         val breakdownHeight = this.persons().size * LINE_HEIGHT
-        val detailedBreakdownHeight = DETAILED_BREAKDOWN_LINE_HEIGHT * when(this.includeDetails) {
-            true -> this.persons().flatMap { it.lines }.size + this.persons().size - 1 + if(this.bill.tipPercent > 0) this.persons().size else 0
+        val detailedBreakdownHeight = DETAILED_BREAKDOWN_LINE_HEIGHT * when (this.includeDetails) {
+            true -> this.persons()
+                .flatMap { it.lines }.size + this.persons().size - 1 + if (this.bill.tipPercent > 0) this.persons().size else 0
+
             false -> 0
         }
 
-        totalPriceHeight += if(this.bill.tipPercent > 0) TIP_PRICE_HEIGHT else 0
+        totalPriceHeight += if (this.bill.tipPercent > 0) TIP_PRICE_HEIGHT else 0
 
         return HEADER_HEIGHT + productsHeight + totalPriceHeight + BREAKDOWN_HEADER_HEIGHT + breakdownHeight + detailedBreakdownHeight
     }
@@ -228,7 +324,7 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
      * @return The ellipsized string
      */
     private fun ellipsizeIfNecessary(text: String, maxChars: Int): String {
-        if(text.count() > maxChars) {
+        if (text.count() > maxChars) {
             return text.take(maxChars / 2) + "…" + text.takeLast(maxChars / 2)
         }
 
@@ -244,9 +340,9 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
     private fun brokenDownPrice(line: BillLine): String {
         val price = BlitterUtils.getPriceAsString(line.price / line.persons.size)
 
-        if(line.persons.size > 1) {
+        if (line.persons.size > 1) {
             val partial = "(1/${line.persons.size})"
-            return if(this.context.resources.getBoolean(R.bool.is_rtl)) "$price $partial" else "$partial $price"
+            return if (this.context.resources.getBoolean(R.bool.is_rtl)) "$price $partial" else "$partial $price"
         } else {
             return BlitterUtils.getPriceAsString(line.price)
         }
@@ -256,8 +352,10 @@ class BillBitmapGenerator(private val context: Context, private val bill: Bill, 
     private fun persons() = this.bill.lines.map { it.persons }.flatten().distinct()
 
     /** @return The proper align start for LTR and RTL layouts. This is left for LTR and right for RTL */
-    private fun alignStart() = if(this.context.resources.getBoolean(R.bool.is_rtl)) Paint.Align.RIGHT else Paint.Align.LEFT
+    private fun alignStart() =
+        if (this.context.resources.getBoolean(R.bool.is_rtl)) Paint.Align.RIGHT else Paint.Align.LEFT
 
     /** @return The proper align end for LTR and RTL layouts. This is right for LTR and left for RTL */
-    private fun alignEnd() = if(this.context.resources.getBoolean(R.bool.is_rtl)) Paint.Align.LEFT else Paint.Align.RIGHT
+    private fun alignEnd() =
+        if (this.context.resources.getBoolean(R.bool.is_rtl)) Paint.Align.LEFT else Paint.Align.RIGHT
 }

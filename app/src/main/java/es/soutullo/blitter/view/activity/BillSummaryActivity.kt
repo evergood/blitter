@@ -2,14 +2,17 @@ package es.soutullo.blitter.view.activity
 
 import android.app.Activity
 import android.content.Intent
-import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.RecyclerView
-import android.util.Log
-import android.view.*
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.RecyclerView
 import es.soutullo.blitter.R
 import es.soutullo.blitter.databinding.ActivityBillSummaryBinding
 import es.soutullo.blitter.model.dao.DaoFactory
@@ -56,8 +59,12 @@ class BillSummaryActivity : AppCompatActivity() {
 
     /** Gets called when the confirm (continue) button is clicked, in order to go to the next activity */
     fun onConfirmClicked(view: View) {
-        val tutorialViewed = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(AssignationIntroActivity.FLAG_ASSIGNATION_INTRO_VIEWED, false)
-        val intent = Intent(this, if(tutorialViewed) AssignationActivity::class.java else AssignationIntroActivity::class.java)
+        val tutorialViewed = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(AssignationIntroActivity.FLAG_ASSIGNATION_INTRO_VIEWED, false)
+        val intent = Intent(
+            this,
+            if (tutorialViewed) AssignationActivity::class.java else AssignationIntroActivity::class.java
+        )
 
         intent.putExtra(BillSummaryActivity.BILL_INTENT_DATA_KEY, this.bill)
         this.startActivityForResult(intent, RETURN_BILL_ID_CODE)
@@ -71,10 +78,14 @@ class BillSummaryActivity : AppCompatActivity() {
         this.startActivity(intent)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> this.onSupportNavigateUp()
-            R.id.action_edit_tax -> EditTaxDialog(this, this.createNewEditTaxDialogHandler(), this.bill.tax).show()
+            R.id.action_edit_tax -> EditTaxDialog(
+                this,
+                this.createNewEditTaxDialogHandler(),
+                this.bill.tax
+            ).show()
         }
 
         return true
@@ -82,10 +93,10 @@ class BillSummaryActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == RETURN_BILL_ID_CODE && resultCode == Activity.RESULT_OK && data != null) {
+        if (requestCode == RETURN_BILL_ID_CODE && resultCode == Activity.RESULT_OK && data != null) {
             val returnedId = data.getLongExtra(INTENT_DATA_RETURNED_BILL_ID, -1)
 
-            if(returnedId > 0) {
+            if (returnedId > 0) {
                 this.bill.id = returnedId
             }
         }
@@ -128,14 +139,15 @@ class BillSummaryActivity : AppCompatActivity() {
      * @param root The root layout of this activity, which contains all the separators
      */
     private fun fillSeparators(root: ViewGroup) {
-        root.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        root.viewTreeObserver.addOnGlobalLayoutListener(object :
+            ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 root.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                 (0 until root.childCount).map { root.getChildAt(it) }.filterIsInstance<TextView>()
-                        .filter { BILL_SEPARATOR_CHARS.contains(it.text) }
-                        .associate {it to (root.measuredWidth / it.paint.measureText(it.text.toString())).toInt() - 2 }
-                        .forEach { it.key.text = it.key.text.repeat(it.value) }
+                    .filter { BILL_SEPARATOR_CHARS.contains(it.text) }
+                    .associate { it to (root.measuredWidth / it.paint.measureText(it.text.toString())).toInt() - 2 }
+                    .forEach { it.key.text = it.key.text.repeat(it.value) }
             }
         })
     }
@@ -144,13 +156,15 @@ class BillSummaryActivity : AppCompatActivity() {
     private fun createNewEditTaxDialogHandler(): IDialogHandler {
         return object : IDialogHandler {
             override fun onPositiveButtonClicked(dialog: CustomDialog) {
-                if(dialog is EditTaxDialog) {
-                    this@BillSummaryActivity.changeTaxValue(dialog.getUserInput().toDoubleOrNull() ?: 0.0)
+                if (dialog is EditTaxDialog) {
+                    this@BillSummaryActivity.changeTaxValue(
+                        dialog.getUserInput().toDoubleOrNull() ?: 0.0
+                    )
                 }
             }
 
-            override fun onNegativeButtonClicked(dialog: CustomDialog) { }
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNegativeButtonClicked(dialog: CustomDialog) {}
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 }

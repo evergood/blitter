@@ -3,9 +3,9 @@ package es.soutullo.blitter.view.activity
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import es.soutullo.blitter.R
 
 // TODO fix code repetition concerning this and main activities
@@ -23,18 +23,31 @@ class CameraIntroActivity : ABlitterIntroActivity() {
 
     override fun onDonePressed(currentFragment: Fragment?) {
         super.onDonePressed(currentFragment)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             this.startActivity(Intent(this, OcrCaptureActivity::class.java))
             this.finish()
         } else {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), MainActivity.PERMISSIONS_REQUEST_CAMERA)
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                MainActivity.PERMISSIONS_REQUEST_CAMERA
+            )
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when(requestCode) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
             MainActivity.PERMISSIONS_REQUEST_CAMERA -> {
-                if(grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
                     this.onDonePressed(null)
                 }
             }

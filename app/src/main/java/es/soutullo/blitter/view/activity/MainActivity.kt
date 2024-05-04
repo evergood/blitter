@@ -4,17 +4,11 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.databinding.DataBindingUtil
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.preference.PreferenceManager
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatDelegate
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.Toolbar
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Menu
@@ -24,6 +18,12 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.RecyclerView
 import es.soutullo.blitter.R
 import es.soutullo.blitter.databinding.ActivityMainBinding
 import es.soutullo.blitter.model.dao.DaoFactory
@@ -68,8 +68,8 @@ class MainActivity : ChoosingLayoutActivity() {
     }
 
     override fun onBackPressed() {
-        if(this.isSearchingMode) {
-            if(this.itemsAdapter.isChoosingModeEnabled()) {
+        if (this.isSearchingMode) {
+            if (this.itemsAdapter.isChoosingModeEnabled()) {
                 val searchEditText = this.findViewById<EditText>(R.id.app_bar_search)
                 val previousSearch = searchEditText.text
 
@@ -90,7 +90,7 @@ class MainActivity : ChoosingLayoutActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         if (this.itemsAdapter.isChoosingModeEnabled()) {
             this.menuInflater.inflate(R.menu.menu_app_bar_activity_main_choosing, menu)
-        } else if(!this.isSearchingMode) {
+        } else if (!this.isSearchingMode) {
             this.menuInflater.inflate(R.menu.menu_app_bar_activity_main, menu)
 
             if (this.itemsAdapter.isEmpty()) {
@@ -101,8 +101,8 @@ class MainActivity : ChoosingLayoutActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item?.itemId) {
             R.id.action_delete -> this.onDeleteClicked()
             R.id.action_settings -> this.startActivity(Intent(this, SettingsActivity::class.java))
             R.id.action_search -> this.onSearchClicked()
@@ -111,10 +111,15 @@ class MainActivity : ChoosingLayoutActivity() {
         return true
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when(requestCode) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
             PERMISSIONS_REQUEST_CAMERA -> {
-                if(grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
                     this.onFromCameraClicked()
                 }
             }
@@ -123,8 +128,8 @@ class MainActivity : ChoosingLayoutActivity() {
 
     override fun onItemClicked(listIndex: Int, clickedViewId: Int) {
         this.itemsAdapter.get(listIndex)?.let { bill ->
-            val intent = when(bill.status) {
-                EBillStatus.WRITING ->  Intent(this, ManualTranscriptionActivity::class.java)
+            val intent = when (bill.status) {
+                EBillStatus.WRITING -> Intent(this, ManualTranscriptionActivity::class.java)
                 EBillStatus.UNCONFIRMED -> Intent(this, BillSummaryActivity::class.java)
                 EBillStatus.ASSIGNING -> Intent(this, AssignationActivity::class.java)
                 EBillStatus.COMPLETED -> Intent(this, FinalResultActivity::class.java)
@@ -138,9 +143,10 @@ class MainActivity : ChoosingLayoutActivity() {
     override fun onChoiceModeStarted() {
         super.onChoiceModeStarted()
 
-        if(this.isSearchingMode) {
+        if (this.isSearchingMode) {
             val searchEditText = this.findViewById<EditText>(R.id.app_bar_search)
-            val inputMethod = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val inputMethod =
+                this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
             inputMethod.hideSoftInputFromWindow(searchEditText.windowToken, 0)
         }
@@ -157,17 +163,26 @@ class MainActivity : ChoosingLayoutActivity() {
     }
 
     /** Gets called when the user clicks the from gallery mini fab */
-    private fun onFromGalleryClicked() { }
+    private fun onFromGalleryClicked() {}
 
     /** Gets called when the user clicks the from camera mini fab */
     private fun onFromCameraClicked() {
-        val tutorialViewed = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(CameraIntroActivity.FLAG_CAMERA_INTRO_VIEWED, false)
+        val tutorialViewed = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean(CameraIntroActivity.FLAG_CAMERA_INTRO_VIEWED, false)
 
         if (tutorialViewed) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
                 this.startActivity(Intent(this, OcrCaptureActivity::class.java))
             } else {
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), PERMISSIONS_REQUEST_CAMERA)
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.CAMERA),
+                    PERMISSIONS_REQUEST_CAMERA
+                )
             }
         } else {
             this.startActivity(Intent(this, CameraIntroActivity::class.java))
@@ -183,17 +198,31 @@ class MainActivity : ChoosingLayoutActivity() {
     private fun onDeleteClicked() {
         val selectedBillsCount = this.itemsAdapter.getSelectedIndexes().size
 
-        val title = this.resources.getQuantityString(R.plurals.dialog_delete_bill_title, selectedBillsCount)
-        val message = this.resources.getQuantityString(R.plurals.dialog_delete_bill_message, selectedBillsCount, selectedBillsCount)
+        val title =
+            this.resources.getQuantityString(R.plurals.dialog_delete_bill_title, selectedBillsCount)
+        val message = this.resources.getQuantityString(
+            R.plurals.dialog_delete_bill_message,
+            selectedBillsCount,
+            selectedBillsCount
+        )
         val positiveText = this.getString(R.string.dialog_generic_delete_button)
         val negativeText = this.getString(R.string.generic_dialog_cancel)
 
-        ConfirmationDialog(this, this.createDeleteDialogHandler(), title, message, positiveText, negativeText).show()
+        ConfirmationDialog(
+            this,
+            this.createDeleteDialogHandler(),
+            title,
+            message,
+            positiveText,
+            negativeText
+        ).show()
     }
 
     /** Gets called when the user confirms he/she wants to delete the selected bills */
     private fun onDeleteConfirmed() {
-        val selectedBills = this.itemsAdapter.items.filterIndexed { index, _ -> this.itemsAdapter.getSelectedIndexes().contains(index) }
+        val selectedBills = this.itemsAdapter.items.filterIndexed { index, _ ->
+            this.itemsAdapter.getSelectedIndexes().contains(index)
+        }
 
         DaoFactory.getFactory(this).getBillDao().deleteBills(selectedBills.mapNotNull { it?.id })
         this.itemsAdapter.finishChoiceMode()
@@ -203,8 +232,12 @@ class MainActivity : ChoosingLayoutActivity() {
 
             this.fetchRecentBills()
 
-            if(this.itemsAdapter.itemCount > 0 && allSelected && !this.isSearchingMode) {
-                Toast.makeText(this, this.getString(R.string.on_all_bills_deleted_warning), Toast.LENGTH_LONG).show()
+            if (this.itemsAdapter.itemCount > 0 && allSelected && !this.isSearchingMode) {
+                Toast.makeText(
+                    this,
+                    this.getString(R.string.on_all_bills_deleted_warning),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }, 500)
     }
@@ -218,11 +251,11 @@ class MainActivity : ChoosingLayoutActivity() {
         this.lastSearchTypedTime = System.currentTimeMillis()
 
         Handler().postDelayed({
-            if(System.currentTimeMillis() - this.lastSearchTypedTime > delay && newText.trim() != "") {
+            if (System.currentTimeMillis() - this.lastSearchTypedTime > delay && newText.trim() != "") {
                 val results = DaoFactory.getFactory(this).getBillDao().searchBills(newText, 20)
 
                 this.itemsAdapter.clear()
-                this.itemsAdapter.addAll(if(results.isNotEmpty()) results else listOf(null))
+                this.itemsAdapter.addAll(if (results.isNotEmpty()) results else listOf(null))
             }
         }, delay + 50)
     }
@@ -244,11 +277,18 @@ class MainActivity : ChoosingLayoutActivity() {
         this.isSearchingMode = showSearch
         this.itemsAdapter.isSearchingMode = showSearch
 
-        val appBarColorId = if(showSearch) R.color.md_white_1000 else R.color.colorPrimary
-        val statusBarColorId = if(showSearch) R.color.md_black_1000 else R.color.colorPrimaryDark
+        val appBarColorId = if (showSearch) R.color.md_white_1000 else R.color.colorPrimary
+        val statusBarColorId = if (showSearch) R.color.md_black_1000 else R.color.colorPrimaryDark
 
 
-        this.supportActionBar?.setBackgroundDrawable(ColorDrawable(ContextCompat.getColor(this,appBarColorId)))
+        this.supportActionBar?.setBackgroundDrawable(
+            ColorDrawable(
+                ContextCompat.getColor(
+                    this,
+                    appBarColorId
+                )
+            )
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             this.window.statusBarColor = ContextCompat.getColor(this, statusBarColorId)
         }
@@ -265,9 +305,9 @@ class MainActivity : ChoosingLayoutActivity() {
         val editText = this.findViewById<EditText>(R.id.app_bar_search)
         val inputMethod = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
-        editText.visibility = if(showSearch) View.VISIBLE else View.GONE
+        editText.visibility = if (showSearch) View.VISIBLE else View.GONE
 
-        if(showSearch) {
+        if (showSearch) {
             editText.setText("")
             editText.requestFocus()
 
@@ -283,17 +323,19 @@ class MainActivity : ChoosingLayoutActivity() {
 
         this.binding.bills = this.itemsAdapter.items
         this.findViewById<RecyclerView>(R.id.recent_bills_list).adapter = this.itemsAdapter
-        this.findViewById<CheckBox>(R.id.select_all_checkbox).setOnCheckedChangeListener(this.createCheckAllListener())
-        this.findViewById<EditText>(R.id.app_bar_search).addTextChangedListener(this.createSearchTextWatcher())
+        this.findViewById<CheckBox>(R.id.select_all_checkbox)
+            .setOnCheckedChangeListener(this.createCheckAllListener())
+        this.findViewById<EditText>(R.id.app_bar_search)
+            .addTextChangedListener(this.createSearchTextWatcher())
 
         this.itemsAdapter.fab = fabSpeedDial.mainFab
-        fabSpeedDial.addOnMenuItemClickListener({ miniFab, label, itemId ->
-            when(itemId) {
+        fabSpeedDial.addOnMenuItemClickListener { _, _, itemId ->
+            when (itemId) {
                 R.id.fab_mini_transcribe -> this.onManualTranscriptionClicked()
 //                R.id.fab_mini_gallery -> this.onFromGalleryClicked()
                 R.id.fab_mini_camera -> this.onFromCameraClicked()
             }
-        })
+        }
     }
 
     /** @return The dialog handler for the bills deletion dialog */
@@ -303,20 +345,20 @@ class MainActivity : ChoosingLayoutActivity() {
                 this@MainActivity.onDeleteConfirmed()
             }
 
-            override fun onNegativeButtonClicked(dialog: CustomDialog) { }
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNegativeButtonClicked(dialog: CustomDialog) {}
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 
     /** Creates the TextWatcher for the search edit text, which manages the on text changed event */
     private fun createSearchTextWatcher(): TextWatcher {
-        return object: TextWatcher {
+        return object : TextWatcher {
             override fun afterTextChanged(editable: Editable?) {
                 editable?.toString()?.let { this@MainActivity.onSearchTextChanged(it) }
             }
 
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
         }
     }
 }

@@ -9,7 +9,9 @@ import android.widget.Button
 import android.widget.TextView
 import es.soutullo.blitter.R
 import java.text.NumberFormat
-import java.util.*
+import java.util.Currency
+import java.util.Date
+import java.util.Locale
 
 /** Provides some useful methods relative to the presentation logic */
 object BlitterUtils {
@@ -30,7 +32,8 @@ object BlitterUtils {
      * @param price The price to convert
      * @return The converted price as string
      */
-    fun getEditablePriceAsString(price: Double): String = NumberFormat.getCurrencyInstance().parse(getPriceAsString(price)).toString()
+    fun getEditablePriceAsString(price: Double): String? =
+        NumberFormat.getCurrencyInstance().parse(getPriceAsString(price))?.toString()
 
     /**
      * Returns a date as a long string, working with internationalization
@@ -38,7 +41,8 @@ object BlitterUtils {
      * @param date The date
      * @return The date as string
      */
-    fun getBeautifulDate(context: Context, date: Date): String = DateFormat.getLongDateFormat(context).format(date)
+    fun getBeautifulDate(context: Context, date: Date): String =
+        DateFormat.getLongDateFormat(context).format(date)
 
     /**
      * Converts a price and a tip percentage to a beautiful human readable string that shows the base price and the tip
@@ -47,14 +51,25 @@ object BlitterUtils {
      * @param tipPercent The tip percentage
      * @return The human readable string
      */
-    fun getPriceAsStringWithTip(context: Context, priceWithoutTip: Double, tipPercent: Double): String {
+    fun getPriceAsStringWithTip(
+        context: Context,
+        priceWithoutTip: Double,
+        tipPercent: Double
+    ): String {
         val tipPrice = priceWithoutTip * tipPercent
 
         if (tipPercent > 0) {
-            return context.getString(R.string.bill_beautiful_price_with_tip, getPriceAsString(priceWithoutTip + tipPrice),
-                    getPriceAsString(priceWithoutTip), getPriceAsString(priceWithoutTip * tipPercent))
+            return context.getString(
+                R.string.bill_beautiful_price_with_tip,
+                getPriceAsString(priceWithoutTip + tipPrice),
+                getPriceAsString(priceWithoutTip),
+                getPriceAsString(priceWithoutTip * tipPercent)
+            )
         } else {
-            return context.getString(R.string.bill_beautiful_price_without_tip, getPriceAsString(priceWithoutTip))
+            return context.getString(
+                R.string.bill_beautiful_price_without_tip,
+                getPriceAsString(priceWithoutTip)
+            )
         }
     }
 
@@ -64,7 +79,8 @@ object BlitterUtils {
      * @param assets The assets manager
      */
     fun applyBillFontToChildren(root: ViewGroup, assets: AssetManager) {
-        (0 until root.childCount).map { root.getChildAt(it) }.filter { it !is Button }.filterIsInstance<TextView>().forEach { textView ->
+        (0 until root.childCount).map { root.getChildAt(it) }.filter { it !is Button }
+            .filterIsInstance<TextView>().forEach { textView ->
             textView.typeface = Typeface.createFromAsset(assets, BILL_FONT_PATH)
         }
     }

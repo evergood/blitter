@@ -7,7 +7,6 @@ import android.view.View
 import com.google.android.gms.vision.CameraSource
 import es.soutullo.blitter.view.activity.OcrCaptureActivity
 import es.soutullo.blitter.view.component.GraphicOverlay.Graphic
-import java.util.*
 
 /**
  * A view which renders a series of custom graphics to be overlaid on top of an associated preview
@@ -31,7 +30,8 @@ import java.util.*
  * from the preview's coordinate system to the view coordinate system.
  *
  */
-class GraphicOverlay<T : GraphicOverlay.Graphic>(context: Context, attrs: AttributeSet) : View(context, attrs) {
+class GraphicOverlay<T : GraphicOverlay.Graphic>(context: Context, attrs: AttributeSet) :
+    View(context, attrs) {
     private val mLock = Any()
     private var mPreviewWidth: Int = 0
     private var mWidthScaleFactor = 1.0f

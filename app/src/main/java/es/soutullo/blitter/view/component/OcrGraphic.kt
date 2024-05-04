@@ -6,7 +6,10 @@ import android.graphics.Paint
 import android.graphics.RectF
 import com.google.android.gms.vision.text.TextBlock
 
-open class OcrGraphic internal constructor(overlay: GraphicOverlay<OcrGraphic>, private val textBlock: TextBlock?) : GraphicOverlay.Graphic(overlay) {
+open class OcrGraphic internal constructor(
+    overlay: GraphicOverlay<OcrGraphic>,
+    private val textBlock: TextBlock?
+) : GraphicOverlay.Graphic(overlay) {
 
     var id: Int = 0
 
@@ -70,7 +73,7 @@ open class OcrGraphic internal constructor(overlay: GraphicOverlay<OcrGraphic>, 
 
     companion object {
 
-        val TEXT_COLOR = Color.WHITE
+        const val TEXT_COLOR = Color.WHITE
 
         var sRectPaint: Paint? = null
         var sTextPaint: Paint? = null

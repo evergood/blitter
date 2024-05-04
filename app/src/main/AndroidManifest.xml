@@ -21,7 +21,7 @@
             android:value="ocr" />
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="es.soutullo.blitter.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -43,6 +43,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name=".view.activity.MainActivity"
+            android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustPan">
@@ -65,10 +66,6 @@
         <activity
             android:name=".view.activity.OcrCaptureActivity"
             android:theme="@style/AppTheme.Fullscreen" />
-        <activity
-            android:name=".view.activity.AdMobActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:noHistory="true"/>
     </application>
 
 </manifest>

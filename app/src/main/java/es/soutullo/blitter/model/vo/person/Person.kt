@@ -1,7 +1,7 @@
 package es.soutullo.blitter.model.vo.person
 
-import android.databinding.BindingAdapter
 import android.widget.ImageView
+import androidx.databinding.BindingAdapter
 import com.amulyakhare.textdrawable.TextDrawable
 import com.amulyakhare.textdrawable.util.ColorGenerator
 import es.soutullo.blitter.model.vo.bill.BillLine
@@ -9,9 +9,15 @@ import java.io.Serializable
 import java.util.*
 
 /** Represents a person, who may partially pay a bill */
-data class Person(val id: Long?, val name: String, val lastDate: Date = Date(), val lines: MutableList<BillLine> = mutableListOf()): Serializable {
+data class Person(
+    val id: Long?,
+    val name: String,
+    val lastDate: Date = Date(),
+    val lines: MutableList<BillLine> = mutableListOf()
+) : Serializable {
     companion object {
-        @JvmStatic @BindingAdapter("app:srcCompat")
+        @JvmStatic
+        @BindingAdapter("app:srcCompat")
         fun setImageDrawable(imageView: ImageView, drawable: TextDrawable) {
             imageView.setImageDrawable(drawable)
         }
@@ -30,14 +36,19 @@ data class Person(val id: Long?, val name: String, val lastDate: Date = Date(), 
      * Calculates the amount of money this person has to pay, considering his assigned lines and taxes. The tip is NOT considered
      * @return The amount of money this person has to pay
      */
-    fun getPayingAmountWithoutTip() = this.lines.map { line -> line.price / line.persons.size }.sum() * (this.calculateTaxPercent() + 1)
+    fun getPayingAmountWithoutTip() = this.lines.map { line -> line.price / line.persons.size }
+        .sum() * (this.calculateTaxPercent() + 1)
 
     /** @return The user profile photo based on its name */
-    fun generateUserProfilePhoto() : TextDrawable {
+    fun generateUserProfilePhoto(): TextDrawable {
         val colorGenerator = ColorGenerator.MATERIAL
-        val initials: String = with(this.name.split(" ")) {(this.firstOrNull()?.firstOrNull()?.toString() ?: "") + (this.getOrNull(1)?.firstOrNull() ?: "")}
+        val initials: String = with(this.name.split(" ")) {
+            (this.firstOrNull()?.firstOrNull()?.toString() ?: "") + (this.getOrNull(1)
+                ?.firstOrNull() ?: "")
+        }
 
-        return TextDrawable.builder().buildRound(initials, colorGenerator.getColor(this.name))
+        return TextDrawable.Builder().setText(initials).setColor(colorGenerator.getColor(this.name))
+            .build()
     }
 
     /**

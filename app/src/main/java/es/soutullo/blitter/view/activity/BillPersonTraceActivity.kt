@@ -1,9 +1,9 @@
 package es.soutullo.blitter.view.activity
 
-import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.RecyclerView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.RecyclerView
 import es.soutullo.blitter.R
 import es.soutullo.blitter.databinding.ActivityBillPersonTraceBinding
 import es.soutullo.blitter.model.vo.person.Person
@@ -21,7 +21,10 @@ class BillPersonTraceActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         this.supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val binding = DataBindingUtil.setContentView<ActivityBillPersonTraceBinding>(this, R.layout.activity_bill_person_trace)
+        val binding = DataBindingUtil.setContentView<ActivityBillPersonTraceBinding>(
+            this,
+            R.layout.activity_bill_person_trace
+        )
         val person = this.intent.getSerializableExtra(PERSON_INTENT_DATA_KEY) as Person
 
         binding.utils = BlitterUtils

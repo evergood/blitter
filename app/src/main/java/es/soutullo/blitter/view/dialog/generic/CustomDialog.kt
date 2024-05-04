@@ -1,17 +1,23 @@
 package es.soutullo.blitter.view.dialog.generic
 
 import android.content.Context
-import android.support.v7.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import es.soutullo.blitter.view.dialog.handler.IDialogHandler
 
 /** Generic class for custom dialogs */
-abstract class CustomDialog protected constructor(protected val context: Context, private val handler: IDialogHandler?, private val title: String) {
+abstract class CustomDialog protected constructor(
+    protected val context: Context,
+    private val handler: IDialogHandler?,
+    private val title: String
+) {
     protected lateinit var dialog: AlertDialog
 
     /** Shows the dialog */
     fun show() {
-        val builder = AlertDialog.Builder(this.context).setTitle(this.title).setPositiveButton(this.getPositiveText(), null)
-                .setNegativeButton(this.getNegativeText(), null).setNeutralButton(this.getNeutralText(), null)
+        val builder = AlertDialog.Builder(this.context).setTitle(this.title)
+            .setPositiveButton(this.getPositiveText(), null)
+            .setNegativeButton(this.getNegativeText(), null)
+            .setNeutralButton(this.getNeutralText(), null)
 
         this.prepareConcreteDialog(builder)
         this.dialog = builder.show()
@@ -27,9 +33,12 @@ abstract class CustomDialog protected constructor(protected val context: Context
 
     /** Adds the listeners to the dialog buttons. This listeners will call the corresponding methods of [handler] */
     private fun addListeners() {
-        this.dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{ this.maybeDismiss(); this.handler?.onPositiveButtonClicked(this) }
-        this.dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener{ this.maybeDismiss(); this.handler?.onNegativeButtonClicked(this) }
-        this.dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener{ this.maybeDismiss(); this.handler?.onNeutralButtonClicked(this) }
+        this.dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            .setOnClickListener { this.maybeDismiss(); this.handler?.onPositiveButtonClicked(this) }
+        this.dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            .setOnClickListener { this.maybeDismiss(); this.handler?.onNegativeButtonClicked(this) }
+        this.dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+            .setOnClickListener { this.maybeDismiss(); this.handler?.onNeutralButtonClicked(this) }
     }
 
     /** Closes the dialog only if the [preventDismissOnButtonClicked] method returns false */

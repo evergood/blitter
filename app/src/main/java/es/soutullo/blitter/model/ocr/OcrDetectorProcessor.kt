@@ -13,7 +13,8 @@ import es.soutullo.blitter.model.vo.bill.EBillStatus
 import es.soutullo.blitter.view.activity.OcrCaptureActivity
 import es.soutullo.blitter.view.component.GraphicOverlay
 import es.soutullo.blitter.view.component.OcrGraphic
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import kotlin.math.abs
 
 /**
@@ -21,9 +22,25 @@ import kotlin.math.abs
  * @param activity The activity where the camera preview is being displayed
  * @param overlay A reference to the graphic overlay used to draw lines over the preview
  */
-class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val overlay: GraphicOverlay<OcrGraphic>) : Detector.Processor<TextBlock> {
+class OcrDetectorProcessor(
+    private val activity: OcrCaptureActivity,
+    private val overlay: GraphicOverlay<OcrGraphic>
+) : Detector.Processor<TextBlock> {
     companion object {
-        private val TOTAL_KEYWORDS = arrayOf("合計", "합계", "共计", "कुल", "итог", "total", "amount", "summe", "jumlah", "toplam", "suma", "totale")
+        private val TOTAL_KEYWORDS = arrayOf(
+            "合計",
+            "합계",
+            "共计",
+            "कुल",
+            "итог",
+            "total",
+            "amount",
+            "summe",
+            "jumlah",
+            "toplam",
+            "suma",
+            "totale"
+        )
         private val TAX_KEYWORDS = arrayOf("tax", "impuesto")
     }
 
@@ -31,20 +48,20 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
     private var successfulScans = 0
     private var finished = false
 
-    override fun receiveDetections(detections: Detector.Detections<TextBlock>?) {
-        val items = detections?.detectedItems
+    override fun receiveDetections(detections: Detector.Detections<TextBlock>) {
+        val items = detections.detectedItems
         this.drawOverlay(items)
 
-        if (items != null && items.size() > 0 && !this.finished) {
+        if (items.size() > 0 && !this.finished) {
             val bounds = (0 until items.size()).map { items.valueAt(it).boundingBox }
-            val minX = bounds.map { it.left }.min()!!
-            val maxX = bounds.map { it.right }.max()!!
+            val minX = bounds.minOf { it.left }
+            val maxX = bounds.maxOf { it.right }
 
             val receiptLines = this.findReceiptLines(items, minX, maxX)
             val recognizedData = this.processReceipt(receiptLines)
 
             this.confirmScan(recognizedData)
-        } else if(!this.finished) {
+        } else if (!this.finished) {
             this.activity.onReceiptPresenceChanged(false)
         }
     }
@@ -57,19 +74,38 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @param maxX The highest horizontal coordinate were text was found by the OCR
      * @return A list containing all the valid lines and their attributes
      */
-    private fun findReceiptLines(items: SparseArray<TextBlock>, minX: Int, maxX: Int): List<ReceiptLine> {
+    private fun findReceiptLines(
+        items: SparseArray<TextBlock>,
+        minX: Int,
+        maxX: Int
+    ): List<ReceiptLine> {
         val leftColumnThreshold = (7 * minX + 3 * maxX) / 10
         val rightColumnThreshold = (3 * minX + 7 * maxX) / 10
 
-        val leftColumnComponents = (0 until items.size()).map { items.valueAt(it) }.flatMap { it.components }
-                .filter { it.boundingBox.left < leftColumnThreshold || this.isTotalText(it.value) || this.isTaxText(it.value) }
+        val leftColumnComponents =
+            (0 until items.size()).map { items.valueAt(it) }.flatMap { it.components }
+                .filter {
+                    it.boundingBox.left < leftColumnThreshold || this.isTotalText(it.value) || this.isTaxText(
+                        it.value
+                    )
+                }
 
-        val rightColumnComponents = (0 until items.size()).map { items.valueAt(it) }.flatMap { it.components }
-                .filter { it.boundingBox.right > rightColumnThreshold }.sortedBy { it.boundingBox.top }
+        val rightColumnComponents =
+            (0 until items.size()).map { items.valueAt(it) }.flatMap { it.components }
+                .filter { it.boundingBox.right > rightColumnThreshold }
+                .sortedBy { it.boundingBox.top }
 
-        return rightColumnComponents.mapNotNull { it.value.findPriceOrNull()?.let { price -> Pair(it, price) }}
-                .filter { (component, price) -> price > 0 && !rightColumnComponents.any { component.boundingBox.right < it.boundingBox.left } }
-                .map { (it, price) -> ReceiptLine(this.findProductName(leftColumnComponents, it), price, this.findBlockVerticalCoordinate(it)) }
+        return rightColumnComponents.mapNotNull {
+            it.value.findPriceOrNull()?.let { price -> Pair(it, price) }
+        }
+            .filter { (component, price) -> price > 0 && !rightColumnComponents.any { component.boundingBox.right < it.boundingBox.left } }
+            .map { (it, price) ->
+                ReceiptLine(
+                    this.findProductName(leftColumnComponents, it),
+                    price,
+                    this.findBlockVerticalCoordinate(it)
+                )
+            }
     }
 
     /**
@@ -81,14 +117,20 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
     private fun processReceipt(receiptLines: List<ReceiptLine>): RecognizedData {
         var totalLine = receiptLines.firstOrNull { this.isTotalText(it.name) }
         val taxLines = receiptLines.filter { this.isTaxText(it.name) }
-        val linesBeforeTotal = receiptLines.filter { it.verticalCoordinate < totalLine?.verticalCoordinate ?: Double.MAX_VALUE }
-        val computedTotal = linesBeforeTotal.sumByDouble { it.price }
+        val linesBeforeTotal = receiptLines.filter {
+            it.verticalCoordinate < (totalLine?.verticalCoordinate ?: Double.MAX_VALUE)
+        }
+        val computedTotal = linesBeforeTotal.sumOf { it.price }
 
         var taxesValue = 0.0
 
-        if(taxLines.isNotEmpty() && totalLine != null && receiptLines.any { it.price > (totalLine?.price ?: 0.0) }) {
-            taxesValue = taxLines.sumByDouble { it.price }
-            totalLine = receiptLines.firstOrNull { this.isTotalText(it.name) && it.price == computedTotal + taxesValue } ?: totalLine
+        if (taxLines.isNotEmpty() && totalLine != null && receiptLines.any {
+                it.price > (totalLine?.price ?: 0.0)
+            }) {
+            taxesValue = taxLines.sumOf { it.price }
+            totalLine =
+                receiptLines.firstOrNull { this.isTotalText(it.name) && it.price == computedTotal + taxesValue }
+                    ?: totalLine
         }
 
         return RecognizedData(linesBeforeTotal, computedTotal, totalLine?.price, taxesValue)
@@ -102,12 +144,13 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @param recognizedData The recognized data in the current frame, given by the [processReceipt] method
      */
     private fun confirmScan(recognizedData: RecognizedData) {
-        if(recognizedData.receiptLines.isNotEmpty()) {
+        if (recognizedData.receiptLines.isNotEmpty()) {
             val sampleCount = this.countedSamples[recognizedData] ?: 0
-            val totalMatching = recognizedData.computedTotal + recognizedData.tax == recognizedData.recognizedTotal
+            val totalMatching =
+                recognizedData.computedTotal + recognizedData.tax == recognizedData.recognizedTotal
             this.successfulScans++
 
-            if((totalMatching && recognizedData.receiptLines.size > 1) || (sampleCount >= 2 && this.successfulScans > 3)) {
+            if ((totalMatching && recognizedData.receiptLines.size > 1) || (sampleCount >= 2 && this.successfulScans > 3)) {
                 val bill = this.createBill(recognizedData)
 
                 this.activity.billRecognized(bill)
@@ -129,8 +172,18 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      */
     private fun createBill(recognizedData: RecognizedData): Bill {
         val date = Date()
-        val billName = this.activity.getString(R.string.bill_final_name_pattern, DateFormat.getDateFormat(this.activity).format(date))
-        val bill = Bill(null, billName, date, EBillSource.CAMERA, EBillStatus.UNCONFIRMED, recognizedData.tax)
+        val billName = this.activity.getString(
+            R.string.bill_final_name_pattern,
+            DateFormat.getDateFormat(this.activity).format(date)
+        )
+        val bill = Bill(
+            null,
+            billName,
+            date,
+            EBillSource.CAMERA,
+            EBillStatus.UNCONFIRMED,
+            recognizedData.tax
+        )
 
         recognizedData.receiptLines.forEachIndexed { index, product ->
             bill.addLine(BillLine(null, bill, index, product.name.take(21), product.price))
@@ -147,7 +200,7 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
         this.overlay.clear()
 
         if (items != null) {
-            for(i in 0 until items.size()) {
+            for (i in 0 until items.size()) {
                 this.overlay.add(OcrGraphic(this.overlay, items.valueAt(i)))
             }
         }
@@ -165,14 +218,22 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @return The product name as a String
      */
     private fun findProductName(leftColumnComponents: List<Text>, priceBlock: Text): String =
-            leftColumnComponents.minBy { abs(this.findBlockVerticalCoordinate(it) - this.findBlockVerticalCoordinate(priceBlock)) }?.value ?: ""
+        leftColumnComponents.minBy {
+            abs(
+                this.findBlockVerticalCoordinate(it) - this.findBlockVerticalCoordinate(
+                    priceBlock
+                )
+            )
+        }.value
+            ?: ""
 
     /**
      * Calculates the text block vertical coordinate as an average of the top and bottom coordinates
      * @param block The block
      * @return The vertical coordinate
      */
-    private fun findBlockVerticalCoordinate(block: Text) = (block.boundingBox.top + block.boundingBox.bottom) / 2.0
+    private fun findBlockVerticalCoordinate(block: Text) =
+        (block.boundingBox.top + block.boundingBox.bottom) / 2.0
 
     /**
      * Determines whether or not a specific text is the "total price" text of the receipt, in any
@@ -180,7 +241,8 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @param text The text
      * @return True if it is the "total price" text
      */
-    private fun isTotalText(text: String) = TOTAL_KEYWORDS.any { text.toLowerCase().contains(it) }
+    private fun isTotalText(text: String) =
+        TOTAL_KEYWORDS.any { text.lowercase(Locale.ROOT).contains(it) }
 
     /**
      * Determines whether or not a specific text is the "tax" text of the receipt, in any
@@ -188,16 +250,23 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @param text The text
      * @return True if it is the "tax" text
      */
-    private fun isTaxText(text: String) = TAX_KEYWORDS.any { text.toLowerCase().contains(it) }
+    private fun isTaxText(text: String) =
+        TAX_KEYWORDS.any { text.lowercase(Locale.ROOT).contains(it) }
 
     /** Finds any valid price contained in the String and converts it to double. If this is not possible,
      * null value is returned */
     private fun String.findPriceOrNull() = this.trimDecimalSeparator().trim().split(Regex(" +"))
-            .lastOrNull { it.toPriceOrNull() != null && it.preserveNumeric().matches(Regex("-?[0-9]+[.,][0-9]{2}")) && it.removeNumeric().length < 3 && !it.contains(Regex("[#%&/():]"))
-                    && (it.contains(Regex("[.,]")) || it.preserveNumeric().length < 4)}?.toPrice()
+        .lastOrNull {
+            it.toPriceOrNull() != null && it.preserveNumeric()
+                .matches(Regex("-?[0-9]+[.,][0-9]{2}")) && it.removeNumeric().length < 3 && !it.contains(
+                Regex("[#%&/():]")
+            )
+                    && (it.contains(Regex("[.,]")) || it.preserveNumeric().length < 4)
+        }?.toPrice()
 
     /** Tries to convert the given String to a valid price. If this is not possible, null is returned */
-    private fun String.toPriceOrNull() = this.preserveNumeric().toDoubleOrNull() ?: this.replace(",", "#")
+    private fun String.toPriceOrNull() =
+        this.preserveNumeric().toDoubleOrNull() ?: this.replace(",", "#")
             .replace(".", ",").replace("#", ".").preserveNumeric().toDoubleOrNull()
 
     /** The same as [toPriceOrNull] but null can never be returned. Instead, an exception will be thrown if the conversion
@@ -211,7 +280,8 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
     private fun String.preserveNumeric() = this.replace(Regex("[^0-9,.\\-]"), "").trim()
 
     /** Removes the surrounding spaces of a decimal separator (comma or period) given a floating number as String */
-    private fun String.trimDecimalSeparator() = this.replace(Regex(" *([,.]) *"), {result ->  result.groupValues[1] })
+    private fun String.trimDecimalSeparator() =
+        this.replace(Regex(" *([,.]) *")) { result -> result.groupValues[1] }
 
     /**
      * Encapsulates the data recognized on a single frame
@@ -220,7 +290,12 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @param recognizedTotal The total price explicitly recognized on the receipt, or null if this was not found
      * @param tax The tax explicitly recognized on the receipt, or zero if this was not found
      */
-    private data class RecognizedData(val receiptLines: List<ReceiptLine>, val computedTotal: Double, val recognizedTotal: Double?, val tax: Double)
+    private data class RecognizedData(
+        val receiptLines: List<ReceiptLine>,
+        val computedTotal: Double,
+        val recognizedTotal: Double?,
+        val tax: Double
+    )
 
     /**
      * Encapsulates each product line of the recognized data
@@ -228,8 +303,14 @@ class OcrDetectorProcessor(private val activity: OcrCaptureActivity, private val
      * @param price The recognized price of the product
      * @param verticalCoordinate The vertical coordinate where the product was found on the receipt
      */
-    private data class ReceiptLine(val name: String, val price: Double, val verticalCoordinate: Double) {
-        override fun equals(other: Any?): Boolean = other is ReceiptLine && other.price == this.price
+    private data class ReceiptLine(
+        val name: String,
+        val price: Double,
+        val verticalCoordinate: Double
+    ) {
+        override fun equals(other: Any?): Boolean =
+            other is ReceiptLine && other.price == this.price
+
         override fun hashCode(): Int = this.price.hashCode()
     }
 }

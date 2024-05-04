@@ -36,18 +36,26 @@ class CameraSourcePreview(context: Context, attrs: AttributeSet) : ViewGroup(con
         val widthRatio = viewWidth.toFloat() / previewWidth.toFloat()
         val heightRatio = viewHeight.toFloat() / previewHeight.toFloat()
 
-        val childWidth = if(widthRatio > heightRatio) viewWidth else (previewWidth.toFloat() * heightRatio).toInt()
-        val childHeight = if(widthRatio > heightRatio) (previewHeight.toFloat() * widthRatio).toInt() else viewHeight
-        val childXOffset = if(widthRatio > heightRatio) 0 else (childWidth - viewWidth) / 2
-        val childYOffset = if(widthRatio > heightRatio) (childHeight - viewHeight) / 2 else 0
+        val childWidth =
+            if (widthRatio > heightRatio) viewWidth else (previewWidth.toFloat() * heightRatio).toInt()
+        val childHeight =
+            if (widthRatio > heightRatio) (previewHeight.toFloat() * widthRatio).toInt() else viewHeight
+        val childXOffset = if (widthRatio > heightRatio) 0 else (childWidth - viewWidth) / 2
+        val childYOffset = if (widthRatio > heightRatio) (childHeight - viewHeight) / 2 else 0
 
         for (i in 0 until childCount) {
-            this.getChildAt(i).layout(-1 * childXOffset, -1 * childYOffset, childWidth - childXOffset, childHeight - childYOffset)
+            this.getChildAt(i).layout(
+                -1 * childXOffset,
+                -1 * childYOffset,
+                childWidth - childXOffset,
+                childHeight - childYOffset
+            )
         }
 
         try {
             this.startIfReady()
-        } catch (e: Exception) { }
+        } catch (e: Exception) {
+        }
     }
 
     fun start(cameraSource: CameraSource, graphicOverlay: GraphicOverlay<OcrGraphic>) {
@@ -79,7 +87,7 @@ class CameraSourcePreview(context: Context, attrs: AttributeSet) : ViewGroup(con
                     val min = min(size.width, size.height)
                     val max = max(size.width, size.height)
 
-                    if(this.isPortraitMode()) {
+                    if (this.isPortraitMode()) {
                         graphicOverlay.setCameraInfo(min, max, cameraSource.cameraFacing)
                     } else {
                         graphicOverlay.setCameraInfo(max, min, cameraSource.cameraFacing)
@@ -91,20 +99,22 @@ class CameraSourcePreview(context: Context, attrs: AttributeSet) : ViewGroup(con
         }
     }
 
-    private fun isPortraitMode() = this.context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    private fun isPortraitMode() =
+        this.context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
     private inner class SurfaceCallback : SurfaceHolder.Callback {
-        override fun surfaceCreated(surface: SurfaceHolder?) {
+        override fun surfaceCreated(holder: SurfaceHolder) {
             try {
                 this@CameraSourcePreview.surfaceAvailable = true
                 this@CameraSourcePreview.startIfReady()
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+            }
         }
 
-        override fun surfaceDestroyed(p0: SurfaceHolder?) {
+        override fun surfaceDestroyed(holder: SurfaceHolder) {
             this@CameraSourcePreview.surfaceAvailable = false
         }
 
-        override fun surfaceChanged(surface: SurfaceHolder?, format: Int, width: Int, height: Int) {}
+        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
     }
 }

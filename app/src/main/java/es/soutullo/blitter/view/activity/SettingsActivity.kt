@@ -21,12 +21,15 @@ class SettingsActivity : AppCompatPreferenceActivity() {
 
         this.supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        this.findPreference(this.getString(R.string.preference_key_delete_all_bills)).setOnPreferenceClickListener { this.onDeleteAllBillsClicked() }
-        this.findPreference(this.getString(R.string.preference_key_contact)).setOnPreferenceClickListener { this.onContactClicked() }
+        this.findPreference(this.getString(R.string.preference_key_delete_all_bills))
+            .setOnPreferenceClickListener { this.onDeleteAllBillsClicked() }
+        this.findPreference(this.getString(R.string.preference_key_contact))
+            .setOnPreferenceClickListener { this.onContactClicked() }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item?.itemId) {
+    @Deprecated("Deprecated in Java")
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> this.finish()
         }
 
@@ -40,8 +43,10 @@ class SettingsActivity : AppCompatPreferenceActivity() {
         val positiveText = this.getString(R.string.dialog_generic_delete_button)
         val negativeText = this.getString(R.string.generic_dialog_cancel)
 
-        ConfirmationDialog(this, this.createDeleteAllBillsDialogHandler(), title, message,
-                positiveText, negativeText).show()
+        ConfirmationDialog(
+            this, this.createDeleteAllBillsDialogHandler(), title, message,
+            positiveText, negativeText
+        ).show()
 
         return true
     }
@@ -53,7 +58,12 @@ class SettingsActivity : AppCompatPreferenceActivity() {
 
         emailIntent.putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
 
-        this.startActivity(Intent.createChooser(emailIntent, this.getString(R.string.intent_chooser_title_send_mail)))
+        this.startActivity(
+            Intent.createChooser(
+                emailIntent,
+                this.getString(R.string.intent_chooser_title_send_mail)
+            )
+        )
 
         return true
     }
@@ -63,7 +73,11 @@ class SettingsActivity : AppCompatPreferenceActivity() {
         DaoFactory.getFactory(this).getBillDao().deleteAllBills()
         DaoFactory.getFactory(this).getPersonDao().deleteAllPersons()
 
-        Toast.makeText(this, this.getString(R.string.toast_delete_all_bills_success), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            this.getString(R.string.toast_delete_all_bills_success),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     /** Gets called when the user clicks the patreon donations option */
@@ -81,8 +95,8 @@ class SettingsActivity : AppCompatPreferenceActivity() {
                 this@SettingsActivity.onDeleteAllBillsConfirmed()
             }
 
-            override fun onNegativeButtonClicked(dialog: CustomDialog) { }
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNegativeButtonClicked(dialog: CustomDialog) {}
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 }

@@ -3,17 +3,17 @@ package es.soutullo.blitter.view.activity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentFilter
-import android.databinding.BindingAdapter
-import android.databinding.DataBindingUtil
 import android.graphics.drawable.Drawable
 import android.hardware.Camera
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.BindingAdapter
+import androidx.databinding.DataBindingUtil
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.vision.text.TextRecognizer
@@ -44,7 +44,8 @@ class OcrCaptureActivity : AppCompatActivity() {
         this.graphicOverlay = this.findViewById(R.id.graphic_overlay)
 
         this.graphicOverlay.activity = this
-        this.findViewById<ImageButton>(R.id.switch_flash_button).visibility = if(this.hashFlash()) View.VISIBLE else View.GONE
+        this.findViewById<ImageButton>(R.id.switch_flash_button).visibility =
+            if (this.hashFlash()) View.VISIBLE else View.GONE
 
         this.onReceiptPresenceChanged(false)
         this.createCameraSource()
@@ -59,7 +60,8 @@ class OcrCaptureActivity : AppCompatActivity() {
     fun switchFlash(view: View) {
         this.cameraSource?.let {
             this.binding.flashEnabled = !this.binding.flashEnabled!!
-            it.flashMode = if(this.binding.flashEnabled!!) Camera.Parameters.FLASH_MODE_TORCH else Camera.Parameters.FLASH_MODE_OFF
+            it.flashMode =
+                if (this.binding.flashEnabled!!) Camera.Parameters.FLASH_MODE_TORCH else Camera.Parameters.FLASH_MODE_OFF
 
             this.binding.notifyChange()
         }
@@ -73,8 +75,8 @@ class OcrCaptureActivity : AppCompatActivity() {
             this.runOnUiThread {
                 val finding = this.findViewById<TextView>(R.id.overlay_finding_ticket)
                 val recognising = this.findViewById<TextView>(R.id.overlay_recognising_ticket)
-                val shown = if(isPresent) recognising else finding
-                val hidden = if(isPresent) finding else recognising
+                val shown = if (isPresent) recognising else finding
+                val hidden = if (isPresent) finding else recognising
 
                 shown.animation = AnimationUtils.loadAnimation(this, R.anim.text_overlay_breathe)
                 hidden.clearAnimation()
@@ -87,7 +89,12 @@ class OcrCaptureActivity : AppCompatActivity() {
 
     /** Gets called from the OCR processor when the receipt data is recognized */
     fun billRecognized(bill: Bill) {
-        this.startActivity(Intent(this, BillSummaryActivity::class.java).putExtra(BillSummaryActivity.BILL_INTENT_DATA_KEY, bill))
+        this.startActivity(
+            Intent(this, BillSummaryActivity::class.java).putExtra(
+                BillSummaryActivity.BILL_INTENT_DATA_KEY,
+                bill
+            )
+        )
         this.finish()
     }
 
@@ -96,27 +103,33 @@ class OcrCaptureActivity : AppCompatActivity() {
         val textRecognizer = TextRecognizer.Builder(this.applicationContext).build()
         textRecognizer.setProcessor(OcrDetectorProcessor(this, this.graphicOverlay))
 
-        if(!textRecognizer.isOperational) {
+        if (!textRecognizer.isOperational) {
             val lowStorageFilter = IntentFilter(Intent.ACTION_DEVICE_STORAGE_LOW)
             val hasLowStorage = this.registerReceiver(null, lowStorageFilter) != null
 
-            if(hasLowStorage) {
-                Toast.makeText(this, this.getString(R.string.toast_ocr_low_storage), Toast.LENGTH_LONG).show()
+            if (hasLowStorage) {
+                Toast.makeText(
+                    this,
+                    this.getString(R.string.toast_ocr_low_storage),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
 
         this.cameraSource = CameraSource.Builder(this.applicationContext, textRecognizer)
-                .setFacing(CameraSource.CAMERA_FACING_BACK).setRequestedPreviewSize(1280, 1024)
-                .setRequestedFps(30.0f).setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE).build()
+            .setFacing(CameraSource.CAMERA_FACING_BACK).setRequestedPreviewSize(1280, 1024)
+            .setRequestedFps(30.0f).setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)
+            .build()
     }
 
     /** Starts the camera and the preview */
     @SuppressLint("MissingPermission")
     private fun startCameraSource() {
-        val code = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this.applicationContext)
+        val code = GoogleApiAvailability.getInstance()
+            .isGooglePlayServicesAvailable(this.applicationContext)
 
-        if(code != ConnectionResult.SUCCESS) {
-            GoogleApiAvailability.getInstance().getErrorDialog(this, code, 0).show()
+        if (code != ConnectionResult.SUCCESS) {
+            GoogleApiAvailability.getInstance().getErrorDialog(this, code, 0)?.show()
         }
 
         this.cameraSource?.let {
@@ -155,7 +168,8 @@ class OcrCaptureActivity : AppCompatActivity() {
     }
 
     companion object {
-        @JvmStatic @BindingAdapter("app:srcCompat")
+        @JvmStatic
+        @BindingAdapter("app:srcCompat")
         fun setImageDrawable(imageButton: ImageButton, drawable: Drawable) {
             imageButton.setImageDrawable(drawable)
         }

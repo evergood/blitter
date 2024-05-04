@@ -2,14 +2,14 @@ package es.soutullo.blitter.view.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.RecyclerView
 import android.text.format.DateFormat
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import es.soutullo.blitter.R
 import es.soutullo.blitter.model.dao.DaoFactory
 import es.soutullo.blitter.model.vo.bill.Bill
@@ -23,7 +23,7 @@ import es.soutullo.blitter.view.dialog.ConfirmationDialog
 import es.soutullo.blitter.view.dialog.EditProductDialog
 import es.soutullo.blitter.view.dialog.generic.CustomDialog
 import es.soutullo.blitter.view.dialog.handler.IDialogHandler
-import java.util.*
+import java.util.Date
 
 class ManualTranscriptionActivity : AppCompatActivity() {
     private val productsAdapter = ManualTranscriptionAdapter()
@@ -44,8 +44,8 @@ class ManualTranscriptionActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item?.itemId) {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
             android.R.id.home -> this.onSupportNavigateUp()
             R.id.action_done -> this.onFinishButtonClicked()
         }
@@ -63,8 +63,16 @@ class ManualTranscriptionActivity : AppCompatActivity() {
         val productNameText = this.findViewById<EditText>(R.id.product_field)
         val productPriceText = this.findViewById<EditText>(R.id.product_price_field)
 
-        if (productNameText.text.isNotBlank() && productPriceText.text.isNotBlank() && productPriceText.text.toString().toFloatOrNull() != null) {
-            this.productsAdapter.add(ManualTranscriptionProduct(productNameText.text.trim().toString(), productPriceText.text.toString().toDouble(), 1))
+        if (productNameText.text.isNotBlank() && productPriceText.text.isNotBlank() && productPriceText.text.toString()
+                .toFloatOrNull() != null
+        ) {
+            this.productsAdapter.add(
+                ManualTranscriptionProduct(
+                    productNameText.text.trim().toString(),
+                    productPriceText.text.toString().toDouble(),
+                    1
+                )
+            )
             this.productsAdapter.recyclerView?.scrollToPosition(this.productsAdapter.itemCount - 1)
             this.doBackup()
 
@@ -78,8 +86,13 @@ class ManualTranscriptionActivity : AppCompatActivity() {
 
     /** Gets called when the user clicks the finish button in the action bar */
     private fun onFinishButtonClicked() {
-        if(!this.productsAdapter.isEmpty()) {
-            this.startActivity(Intent(this, BillSummaryActivity::class.java).putExtra(BillSummaryActivity.BILL_INTENT_DATA_KEY, this.bill))
+        if (!this.productsAdapter.isEmpty()) {
+            this.startActivity(
+                Intent(this, BillSummaryActivity::class.java).putExtra(
+                    BillSummaryActivity.BILL_INTENT_DATA_KEY,
+                    this.bill
+                )
+            )
         } else {
             this.onTryToFinishWithNoProducts()
         }
@@ -90,8 +103,12 @@ class ManualTranscriptionActivity : AppCompatActivity() {
      * @param listIndex The index of the product on the list of the adapter
      */
     private fun onEditProductClicked(listIndex: Int) {
-        EditProductDialog(this, this.editDialogHandler(listIndex), this.getString(R.string.dialog_edit_product_title),
-                this.productsAdapter.get(listIndex)).show()
+        EditProductDialog(
+            this,
+            this.editDialogHandler(listIndex),
+            this.getString(R.string.dialog_edit_product_title),
+            this.productsAdapter.get(listIndex)
+        ).show()
     }
 
     /**
@@ -99,9 +116,17 @@ class ManualTranscriptionActivity : AppCompatActivity() {
      * @param listIndex The index of the product on the list of the adapter
      */
     private fun onDeleteProductClicked(listIndex: Int) {
-        ConfirmationDialog(this, this.deleteDialogHandler(listIndex), this.getString(R.string.dialog_delete_product_title),
-                this.getString(R.string.dialog_delete_product_message, this.productsAdapter.get(listIndex).name),
-                this.getString(R.string.dialog_generic_delete_button), this.getString(R.string.generic_dialog_cancel))
+        ConfirmationDialog(
+            this,
+            this.deleteDialogHandler(listIndex),
+            this.getString(R.string.dialog_delete_product_title),
+            this.getString(
+                R.string.dialog_delete_product_message,
+                this.productsAdapter.get(listIndex).name
+            ),
+            this.getString(R.string.dialog_generic_delete_button),
+            this.getString(R.string.generic_dialog_cancel)
+        )
             .show()
     }
 
@@ -126,12 +151,20 @@ class ManualTranscriptionActivity : AppCompatActivity() {
 
     /** Gets called when the user presses the add/edit product button but he/she has not filled all the required fields properly */
     private fun onTryToAddProductWithWrongField() {
-        Toast.makeText(this, this.getString(R.string.toast_manual_transcription_fill_fields), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            this.getString(R.string.toast_manual_transcription_fill_fields),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     /** Gets called when the user presses the finish button but he/she has not added any product to the list */
     private fun onTryToFinishWithNoProducts() {
-        Toast.makeText(this, this.getString(R.string.toast_manual_transcription_no_products), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            this.getString(R.string.toast_manual_transcription_no_products),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     /** Saves the bill status on the database */
@@ -140,7 +173,7 @@ class ManualTranscriptionActivity : AppCompatActivity() {
             this.bill = this.toBill(this.bill?.id, this.productsAdapter.items)
             DaoFactory.getFactory(this).getBillDao().updateBill(this.bill!!.id, this.bill!!)
         } else {
-            val deleteIds = if(this.bill?.id != null) listOf(this.bill!!.id!!) else listOf()
+            val deleteIds = if (this.bill?.id != null) listOf(this.bill!!.id!!) else listOf()
             DaoFactory.getFactory(this).getBillDao().deleteBills(deleteIds)
         }
     }
@@ -153,15 +186,18 @@ class ManualTranscriptionActivity : AppCompatActivity() {
      */
     private fun toBill(billId: Long?, products: List<ManualTranscriptionProduct>): Bill {
         val date = Date()
-        val billName = this.getString(R.string.bill_final_name_pattern, DateFormat.getDateFormat(this).format(date))
+        val billName = this.getString(
+            R.string.bill_final_name_pattern,
+            DateFormat.getDateFormat(this).format(date)
+        )
         val bill = Bill(billId, billName, date, EBillSource.MANUAL, EBillStatus.WRITING)
 
         var i = 0
         for ((name, unitPrice, quantity) in products) {
-           for(j in 0 until quantity) {
-               bill.addLine(BillLine(null, bill, i, name, unitPrice))
-               i++
-           }
+            for (j in 0 until quantity) {
+                bill.addLine(BillLine(null, bill, i, name, unitPrice))
+                i++
+            }
         }
 
         return bill
@@ -176,7 +212,13 @@ class ManualTranscriptionActivity : AppCompatActivity() {
     private fun toProducts(nullableBill: Bill?): List<ManualTranscriptionProduct> {
         nullableBill?.let { bill ->
             return bill.lines.groupBy { Pair(it.name, it.price) }
-                    .map { ManualTranscriptionProduct(it.value.first().name, it.value.first().price, it.value.size) }
+                .map {
+                    ManualTranscriptionProduct(
+                        it.value.first().name,
+                        it.value.first().price,
+                        it.value.size
+                    )
+                }
         }
 
         return arrayListOf()
@@ -184,14 +226,16 @@ class ManualTranscriptionActivity : AppCompatActivity() {
 
     /** Initializes some fields of the activity */
     private fun init() {
-        this.findViewById<EditText>(R.id.product_price_field).setOnEditorActionListener {_, _, _ -> this.onAddProductButtonClicked(null); true}
-        this.findViewById<RecyclerView>(R.id.manual_products_list).adapter = this@ManualTranscriptionActivity.productsAdapter
+        this.findViewById<EditText>(R.id.product_price_field)
+            .setOnEditorActionListener { _, _, _ -> this.onAddProductButtonClicked(null); true }
+        this.findViewById<RecyclerView>(R.id.manual_products_list).adapter =
+            this@ManualTranscriptionActivity.productsAdapter
 
         this.productsAdapter.addAll(this.toProducts(this.bill))
 
         this.productsAdapter.handler = object : IListHandler {
             override fun onItemClicked(listIndex: Int, clickedViewId: Int) {
-                when(clickedViewId) {
+                when (clickedViewId) {
                     R.id.edit_product -> onEditProductClicked(listIndex)
                     R.id.delete_product -> onDeleteProductClicked(listIndex)
                 }
@@ -209,7 +253,7 @@ class ManualTranscriptionActivity : AppCompatActivity() {
     private fun editDialogHandler(listIndex: Int): IDialogHandler {
         return object : IDialogHandler {
             override fun onPositiveButtonClicked(dialog: CustomDialog) {
-                if(dialog is EditProductDialog && dialog.getNewProduct() != null) {
+                if (dialog is EditProductDialog && dialog.getNewProduct() != null) {
                     onEditProductConfirmed(listIndex, dialog.getNewProduct()!!)
                     dialog.dismiss()
                 } else {
@@ -221,7 +265,7 @@ class ManualTranscriptionActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
 
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 
@@ -238,8 +282,8 @@ class ManualTranscriptionActivity : AppCompatActivity() {
                 onDeleteProductConfirmed(listIndex)
             }
 
-            override fun onNegativeButtonClicked(dialog: CustomDialog) { }
-            override fun onNeutralButtonClicked(dialog: CustomDialog) { }
+            override fun onNegativeButtonClicked(dialog: CustomDialog) {}
+            override fun onNeutralButtonClicked(dialog: CustomDialog) {}
         }
     }
 }
